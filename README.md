@@ -59,15 +59,15 @@ Rather than defining validation files manually from scratch they can be automati
 
 ```python
 from nornir import InitNornir
-from nornir_validate import val_file_builder, print_build_result
+from nornir_validate import generate_val_file, print_result_gvf
 
 nr = InitNornir(config_file="config.yml")
 
 with open("CORE_index.yml") as tmp_data:
     input_idx = yaml.load(tmp_data, Loader=yaml.Loader)
 
-result = nr.run(task=val_file_builder, input_data=input_idx)
-print_build_result(result, nr)
+result = nr.run(task=generate_val_file, input_data=input_idx)
+print_result_gvf(result, nr)
 ```
 
 Validations that have *environment-specific* elements (such as VRF route table) must be manually defined in the index file, if not it will only generate validations for the global elements (the global routing table).

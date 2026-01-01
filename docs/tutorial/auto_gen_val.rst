@@ -11,30 +11,30 @@ Key Behaviors
 -------------
 
 - The index file can be full path or the name of a file in the local directory
-- The generated validation files are named using the format: ``<hostname>_vals.yml``
+- The generated validation files are named in the format: ``<hostname>_vals.yml``
 - Interfaces that are *unassigned* or *admin down* will be **ignored** and not added to the validations
 - The below validations can have **environment-specific** elements (such as VRF name), these must be manually defined in the index file.
 
     - *Management ACL (system.mgmt_acl)*: If ACL names not specified will return all ACLs
-    - *MAC address count (layer2.mac_table)*: If no *VLANs* defined only returns total number of MACs
+    - *MAC count (layer2.mac_table)*: If no *VLANs* defined only returns total number of MACs
     - *Route table count (route_table.route_count)*: If no *VRFs* defined only returns total number of routes in global RT
     - *Route table routes (route_table.route)*: If no *VRFs* defined only returns routes in global RT
-    - *WiFi client count (wifi.client_count)*: If no *WLANs* defined only returns total number of clients
+    - *WiFi client count (wifi.client_count)*: If no *WLANs* defined only returns total clients
 
 Generating Validation Files
 ---------------------------
 
-Running the *val_file_builder* task without any arguments will generate a validation file for all OS sub-features, see *Key Behaviors* regards environment-specific elements (VRFs, MACs, etc).
+Running the *generate_val_file* task without any arguments will generate a validation file for all OS sub-features, see *Key Behaviors* regards environment-specific elements (VRFs, MACs, etc).
 
 .. code-block:: python
 
     from nornir import InitNornir
-    from nornir_validate import val_file_builder, print_build_result
+    from nornir_validate import generate_val_file, print_result_gvf
 
     nr = InitNornir(config_file="config.yml")
 
-    result = nr.run(task=val_file_builder)
-    print_build_result(result, nr)
+    result = nr.run(task=generate_val_file)
+    print_result_gvf(result, nr)
 
 .. figure:: /_static/images/auto-gen_val_file.png
    :alt: Auto-generate validation file example
@@ -64,8 +64,8 @@ To generate a validation file for specific sub-features the **input_data** argum
     with open("CORE_index.yml") as tmp_data:
         input_idx = yaml.load(tmp_data, Loader=yaml.Loader)
 
-    result = nr.run(task=val_file_builder, input_data=input_idx)
-    print_build_result(result, nr)
+    result = nr.run(task=generate_val_file, input_data=input_idx)
+    print_result_gvf(result, nr)
 
 This would result in the following validation file being generated:
 
@@ -132,18 +132,22 @@ By default the validation file is saved to the local directory (*<hostname>_vals
 
 .. code-block:: python
 
-    result = nr.run(task=val_file_builder, input_data=input_idx, directory="/Users/user1/Documents/folder1")
+    result = nr.run(task=generate_val_file, input_data=input_idx, directory="/Users/user1/Documents/folder1")
 
 Gotchas
 -------
 
 If a command returns empty data rather than raising an error the sub-feature will be treated as present in the returned on-screen result. In the validation file this is reflected by the sub-feature appearing as an empty dictionary.
 
-To support generating validation files without providing an index file (of sub-features), the output from failed commands has to be suppressed. Since any sub-feature not enabled on the device will naturally fail, displaying all those false negatives would be confusing. If you need to see this output for troubleshooting use the traditional *print_val_result* function instead of *val_file_builder*.
+To support generating validation files without providing an index file (of sub-features), the output from failed commands has to be suppressed. Since any sub-feature not enabled on the device will naturally fail, displaying all those false negatives would be confusing. If you need to see this output for troubleshooting use the traditional *print_val_result* function instead of *generate_val_file*.
 
 .. code-block:: python
 
-    from nr_val import val_file_builder, print_val_result
+    from nr_val import generate_val_file, print_val_result
 
-    result = nr.run(task=val_file_builder)
+    result = nr.run(task=generate_val_file)
     print_val_result(result)
+
+.. note::
+
+  If the returned result has no *used_subfeat* and/or *file_info* is empty it is likely due to an errored that couldn't be cleanly handled (device connectivity, ntc-template bug, etc), again use ``print_val_result`` to investigate true reason for the failure.

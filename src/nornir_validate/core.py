@@ -386,9 +386,9 @@ def validate(
 
 
 # ----------------------------------------------------------------------------
-# 5. VAL_FILE_BUILDER: Builds validation files based on the actual state
+# 5. GENERATE_VAL_FILE: Builds validation files based on the actual state
 # ----------------------------------------------------------------------------
-def val_file_builder(
+def generate_val_file(
     task: Task, input_data: dict[str, Any] | str = "", directory: str = ""
 ) -> Result:
     """Generates a validation file based on what features are enabled on a device (gathered from actual state).
@@ -453,12 +453,18 @@ def val_file_builder(
     os_type = merge_os_types(task.host)
     actual_state = actual_state_engine(True, os_type, feat_actual_data)
     val_file = os.path.join(directory, f"{str(task.host)}_vals.yml")
-    task.run(
-        task=write_file,
-        filename=val_file,
-        content=yaml.dump({"hosts": {str(task.host): actual_state}}, sort_keys=False),
-    )
-    info = f"✅ Created the validation file '{val_file}'"
+    # If no sub-features enabled on device doesn't create validation file
+    if len(used_subfeat) == 0:
+        info = "⚠️  No validation file created as no features/sub-features were detected as being enabled on the device"
+    else:
+        info = f"✅ Validation file created with {len(used_subfeat)} sub-features - '{val_file}'"
+        task.run(
+            task=write_file,
+            filename=val_file,
+            content=yaml.dump(
+                {"hosts": {str(task.host): actual_state}}, sort_keys=False
+            ),
+        )
     return Result(
         host=task.host,
         result="",
@@ -480,21 +486,45 @@ def print_val_result(result: AggregatedResult) -> None:
     print_result(result)
 
 
-def print_build_result(result: AggregatedResult, nr: Nornir) -> None:
+def print_result_gvf(result: AggregatedResult, nr: Nornir) -> None:
     """Prints the result of the validation file builder, required in this manner so that failed tasks (features not enabled) dont show as a failed result.
 
     Args:
         result (AggregatedResult): The nornir result from the execution of the task, am only printing results for specified vars
         nr (Nornir,): The Nornir inventory from which get (loop through) hostnames
     """
+    from nornir.core.task import MultiResult
+
+    # Create a new AggregatedResult to hold all modified results
+    combined_result = AggregatedResult(name=result.name)
+
     for each_host in nr.inventory.hosts.keys():  # noqa: SIM118
-        print_result(
-            result[each_host][0],
-            vars=[
-                "host",
-                "result",
-                "used_subfeat",
-                "not_used_subfeat",
-                "file_info",
-            ],
+        host_result = result[each_host][0]
+        # Safely get attributes with defaults if they don't exist
+        used_subfeat = getattr(host_result, "used_subfeat", [])
+        not_used_subfeat = getattr(host_result, "not_used_subfeat", [])
+        file_info = getattr(host_result, "file_info", "N/A")
+        # Check if used_subfeat is empty to determine failed status
+        is_failed = len(used_subfeat) == 0
+        # Create a modified result
+        modified_result = Result(
+            name=host_result.name,  # Preserve the task name
+            host=host_result.host,  # Just the string name
+            not_used_subfeat=not_used_subfeat,
+            used_subfeat=used_subfeat,
+            file_info=file_info,  # User feedback message
+            failed=is_failed,  # Mark as failed if used_subfeat is empty
+            result=host_result.result,  # Preserve result if any
         )
+        # Wrap in MultiResult (a list) as expected by nornir-rich
+        combined_result[each_host] = MultiResult(name=result.name)
+        combined_result[each_host].append(modified_result)
+    # Prints only selected fields from nornir result
+    print_result(
+        combined_result,
+        vars=[
+            "used_subfeat",
+            "not_used_subfeat",
+            "file_info",
+        ],
+    )
