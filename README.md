@@ -8,7 +8,7 @@
 
 A Nornir plugin for validating network state (*actual state*) against YAML-based specifications (*desired state*). This project extends [napalm-validate](https://github.com/napalm-automation/napalm/blob/develop/napalm/base/validate.py) to perform command-based validation rather than relying solely on getters, providing greater flexibility in validating arbitrary command outputs. It leverages Nornir with `nornir-netmiko` to collect and format device data, then compares ***actual state*** against ***desired state*** to generate a ***compliance report***.
 
-For a complete list of supported validations, see the [validation reference](http://127.0.0.1:5500/_build/html/validations.html).
+For a complete list of supported validations, see the [validation reference](https://nornir-validate.readthedocs.io/en/latest/validations.html).
 
 ## How It Works
 
