@@ -11,7 +11,7 @@ How It Works
 3. **Data Collection**: `Nornir <https://github.com/nornir-automation/nornir>`_ (`netmiko plugin <https://github.com/ktbyers/nornir_netmiko>`_) executes commands against target devices parsing the outputs through `ntc-templates <https://github.com/networktocode/ntc-templates>`_ to construct the *actual state*
 4. **Compliance Report**: The *desired state* and *actual state* are fed into `napalm-validate <https://github.com/napalm-automation/napalm/blob/develop/napalm/base/validate.py>`_  generating a *compliance report* of the differences
 
-.. figure:: /_static/images/val_example.gif
+.. figure:: /_static/images/terminalizer_val_example.gif
    :alt: Compliance report animation
    :width: 100%
    :align: center

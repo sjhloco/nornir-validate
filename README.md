@@ -1,3 +1,5 @@
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nornir-validate)
+![PyPI - Version](https://img.shields.io/pypi/v/nornir-validate)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Documentation Status](https://readthedocs.org/projects/nornir-validate/badge/?version=latest)](https://nornir-validate.readthedocs.io/en/latest/?badge=latest)
@@ -15,7 +17,7 @@ For a complete list of supported validations, see the [validation reference](htt
 3. **Data Collection**: *Nornir* (*netmiko* plugin) executes commands against target devices parsing the outputs through `ntc-templates` to construct the *actual state*
 4. **Compliance Report**: The *desired state* and *actual state* are fed into *napalm_validate* generating a *compliance report* of the differences
 
-![Image](https://github.com/user-attachments/assets/879a2aaa-15a5-45f3-9f6d-37814f1703f4)
+![Image](https://github.com/user-attachments/assets/5f80656a-6ed5-405e-99f1-1c4cfb4281e8)
 
 ## Installation
 
@@ -40,7 +42,7 @@ The compliance report is generated based on a YAML formatted validation file des
 ```python
 import yaml
 from nornir import InitNornir
-from nornir_validate import validate, print_val_result
+from nornir_validate import validate, print_result_val
 
 nr = InitNornir(config_file="config.yml")
 
@@ -48,7 +50,7 @@ with open("input_val_data.yml") as tmp_data:
     input_data = yaml.load(tmp_data, Loader=yaml.Loader)
 
 result = nr.run(task=validate, input_data=input_data)
-print_val_result(result)
+print_result_val(result)
 ```
 
 By default the full compliance report will be printed to the screen if the validation fails, add the `save_report=""` argument to also save it to file.
@@ -71,6 +73,14 @@ print_result_gvf(result, nr)
 ```
 
 Validations that have *environment-specific* elements (such as VRF route table) must be manually defined in the index file, if not it will only generate validations for the global elements (the global routing table).
+
+## Example projects
+
+Below are few projects that use *nornir-validate*:
+
+- [nr-val](https://github.com/sjhloco/nr-val): A basic no-frills script to generate validation files and create compliance reports
+- [nornir-ppcheck](https://github.com/sjhloco/nornir-ppcheck): Tool for running pre and post change check as well as validation of network state
+- [update-mgmt-acl](https://github.com/sjhloco/update-mgmt-acl): Tool to update management and SNMP ACLs on Cisco IOS-XE, NXOS and ASA
 
 ## Contributing
 

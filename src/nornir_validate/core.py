@@ -327,7 +327,10 @@ def actual_state_engine(
 # 4. ENGINE: Formats gathered output as actual state and runs compliance report - Only one that prints (logging debug)
 # ----------------------------------------------------------------------------
 def validate(
-    task: Task, input_data: dict[str, Any], save_report: str | None = None
+    task: Task,
+    input_data: dict[str, Any],
+    save_report: str | None = None,
+    print_report: bool = False,
 ) -> Result:
     """The main engine that runs file formatting, nornir tasks and compliance report.
 
@@ -335,6 +338,7 @@ def validate(
         task (Task): The nornir tasks that implements (runs) this the nornir tasks
         input_data (str): The User defined input data from input file
         save_report (str | None): To optionally save compliance reports to the directory specified in this variable
+        print_report (bool): To optionally print compliance report if passes, by default only prints if fails
     Returns:
         Result: The final result of nornir_validate (all tasks), a special Nornir Result object passed back to the main() method to be printed
     """
@@ -375,13 +379,20 @@ def validate(
     comp_result = generate_validate_report(
         desired_state, actual_state, str(task.host), save_report
     )
+
     # 4e. RSLT: Nornir returns compliance result or if fails the compliance report
+    # If report complies dont print full report (unless print_report set)
+    if "True" in comp_result["complies"] and not print_report:
+        comp_result["report"] = ""
+    # If report is printed remove complies (has its own section)
+    elif comp_result["report"].get("complies") is not None:
+        del comp_result["report"]["complies"]
     return Result(
         host=task.host,
         failed=comp_result["failed"],
-        result=comp_result["result"],
-        report=comp_result["report"],
-        report_text=comp_result["report_text"],
+        result=comp_result["report"],
+        report_complies=comp_result["complies"],
+        report_file=comp_result["report_file"],
     )
 
 
@@ -477,13 +488,13 @@ def generate_val_file(
 # ----------------------------------------------------------------------------
 # 6. PRINT: Functions for printing results
 # ----------------------------------------------------------------------------
-def print_val_result(result: AggregatedResult) -> None:
+def print_result_val(result: AggregatedResult) -> None:
     """Prints the result of the validation in a user friendly way using a customization of nornir_rich print (better handling of dicts).
 
     Args:
         result (AggregatedResult): The nornir result from the execution of the task, so the compliance report in Nornir Result format
     """
-    print_result(result)
+    print_result(result, vars=["report_complies", "report_file", "result"])
 
 
 def print_result_gvf(result: AggregatedResult, nr: Nornir) -> None:

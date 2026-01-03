@@ -10,7 +10,7 @@ from napalm.base import validate  # type: ignore
 # ----------------------------------------------------------------------------
 # FIX: napalm_validate doesn't recognize ~/ for home drive
 # ----------------------------------------------------------------------------
-def fix_home_path(input_path: str) -> str:
+def _fix_home_path(input_path: str) -> str:
     """If the string starts with `~/`, it replaces the `~` with the user's home directory (due to napalm bug #1180).
 
     Arg:
@@ -27,7 +27,7 @@ def fix_home_path(input_path: str) -> str:
 # -------------------------------------------------------------------------------------------
 # REPORT_FILE: If a hostname and directory are passed in as function arguments saves report to file
 # --------------------------------------------------------------------------------------------
-def save_report_to_file(
+def _save_report_to_file(
     hostname: str,
     directory: str,
     report: dict[str, Any],
@@ -46,7 +46,7 @@ def save_report_to_file(
     Return: Report location and command to view prettified version (xxx | python -m json.tool)
     """
     filename = os.path.join(
-        fix_home_path(directory),
+        _fix_home_path(directory),
         hostname
         + "_compliance_report_"
         + datetime.now().strftime("%Y%m%d-%H%M")
@@ -74,7 +74,9 @@ def save_report_to_file(
     with open(filename, "w") as file_content:
         json.dump(existing_report, file_content)
     # return f" The report can be viewed using:  \n \33[3m\033[1;37m\33[30m  cat {filename} | python -m json.tool \033[0;0m"
-    return f" The report can be viewed using:  \ncat {filename} | python -m json.tool"
+    return (
+        f" The full report can be viewed using 'cat {filename} | python -m json.tool'"
+    )
 
 
 # ----------------------------------------------------------------------------------------------------------
@@ -117,28 +119,26 @@ def generate_validate_report(
     # RESULT: Results of compliance report (complies = validation result, skipped (list of skipped cmds) = validation didn't run)
     complies = all([each_cmpl.get("complies", True) for each_cmpl in report.values()])
     skipped = [feat for feat, output in report.items() if output.get("skipped", False)]
+
     # REPORT_FILE: Save report to file, if not add complies and skipped dictionary to report
     if hostname is not None and directory is not None:
-        report_text = save_report_to_file(
+        report_file = _save_report_to_file(
             hostname, directory, report, complies, skipped
         )
     else:
         # Empty value if report_file not created
-        report_text = ""
-    # These must be added after the report
+        report_file = ""
+    # complies and skipped must be added after the report
     report["complies"] = complies
     if len(skipped) != 0:
         report["skipped"] = skipped
-    # RETURN_RESULT: If compliance fails set state failed (used by Nornir). report dict is used in validation builder
+    # RETURN_RESULT: If compliance fails set state failed (used by Nornir)
     if complies:
         my_report = dict(
-            failed=False,
-            result="\u2705 Compliance report complies, desired_state and actual_state match.",
-            report=report,
-            report_text=report_text,
+            failed=False, report=report, report_file=report_file, complies="✅ True"
         )
     if not complies or skipped:
         my_report = dict(
-            failed=True, result=report, report=report, report_text=report_text
+            failed=True, report=report, report_file=report_file, complies="❌ False"
         )
     return my_report
