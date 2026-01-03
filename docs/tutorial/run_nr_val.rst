@@ -60,7 +60,7 @@ The validate method is imported directly into a script leveraging the existing N
 
     import yaml
     from nornir import InitNornir
-    from nornir_validate import validate, print_val_result
+    from nornir_validate import validate, print_result_val
   
     nr = InitNornir(config_file="config.yml")
 
@@ -68,7 +68,7 @@ The validate method is imported directly into a script leveraging the existing N
         input_data = yaml.load(tmp_data, Loader=yaml.Loader)
 
     result = nr.run(task=validate, input_data=input_data)
-    print_val_result(result)
+    print_result_val(result)
 
 Alternatively, you can just feed the data in direct rather than loading it from a file.
 
@@ -86,13 +86,13 @@ Alternatively, you can just feed the data in direct rather than loading it from 
         }
     }
     result = nr.run(task=validate, input_data=input_data)
-    print_val_result(result)
+    print_result_val(result)
 
-By default the full compliance report is printed to screen if the validation fails (Nornir task marked as failed). To also save the report to file (*hostname_compliance_report_YYYYMMDD-HHMM.json*) add the **save_report** argument, specify *""* for the current directory or provide an explicit directory path.
+By default the compliance report is printed to screen only if the validation fails (Nornir task marked as failed), add the ``print_report=True`` argument to also print the report if the validation passes. The report can also be saved to file (*hostname_compliance_report_YYYYMMDD-HHMM.json*), add ``save_report=`` with an explicit directory path or ``""`` for the current directory.
 
 .. code-block:: python
 
-  result = nr.run(task=validate, input_data=input_data, save_report="")
+  result = nr.run(task=validate, input_data=input_data, print_report=True, save_report="")
 
 Compliance Report
 -----------------

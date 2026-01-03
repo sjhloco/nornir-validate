@@ -34,7 +34,7 @@ nornir-netmiko==1.0.1
 nornir-rich @ git+https://github.com/sjhloco/nornir_rich@cf2674259c24d001b71831482840b9ebd97caf21
 nornir-utils==0.2.0
 -e file:///Users/ste/Desktop/nornir-validate
-ntc-templates @ git+https://github.com/networktocode/ntc-templates@3f1a8bc009f4bed52eb8aec009c897844aab59f0
+ntc-templates @ git+https://github.com/networktocode/ntc-templates.git@286039ef3a4c9b5899ef35eb7e662f44c7328576
 packaging==25.0
 paramiko==4.0.0
 parso==0.8.5

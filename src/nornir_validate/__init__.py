@@ -3,7 +3,7 @@ from importlib.metadata import PackageNotFoundError, version
 from nornir_validate.core import (
     generate_val_file,
     print_result_gvf,
-    print_val_result,
+    print_result_val,
     validate,
 )
 
@@ -13,4 +13,4 @@ except PackageNotFoundError:
     # Package isn't installed yet (dev mode)
     __version__ = "0.0.0"
 
-__all__ = ["validate", "print_val_result", "generate_val_file", "print_result_gvf"]
+__all__ = ["validate", "print_result_val", "generate_val_file", "print_result_gvf"]
