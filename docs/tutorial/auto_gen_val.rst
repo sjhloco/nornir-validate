@@ -139,15 +139,15 @@ Gotchas
 
 If a command returns empty data rather than raising an error the sub-feature will be treated as present in the returned on-screen result. In the validation file this is reflected by the sub-feature appearing as an empty dictionary.
 
-To support generating validation files without providing an index file (of sub-features), the output from failed commands has to be suppressed. Since any sub-feature not enabled on the device will naturally fail, displaying all those false negatives would be confusing. If you need to see this output for troubleshooting use the traditional *print_result_val* function instead of *generate_val_file*.
+To support generating validation files without providing an index file (of sub-features) the output from failed commands has to be suppressed as any sub-feature not enabled on the device will naturally fail (displaying all these false negatives would be confusing). If there was an actual issue such as wrong credentials or an ntc-template problem, no validation files will be created but the true error won't be displayed. In such a case use the traditional *nornir_rich print_result* function instead of *generate_val_file* to see the true error message for troubleshooting.
 
 .. code-block:: python
 
-    from nr_val import generate_val_file, print_result_val
+    from nornir_rich.functions import print_result
 
     result = nr.run(task=generate_val_file)
-    print_result_val(result)
+    print_result(result)
 
 .. note::
 
-  If the returned result has no *used_subfeat* and/or *file_info* is empty it is likely due to an errored that couldn't be cleanly handled (device connectivity, ntc-template bug, etc), again use ``print_result_val`` to investigate true reason for the failure.
+  If the returned result has no *used_subfeat* and/or *file_info* is empty it is likely due to an errored that couldn't be cleanly handled (device connectivity, ntc-template bug, etc), again use ``print_result`` to investigate true reason for the failure.

@@ -1,6 +1,6 @@
 [project]
 name = "nornir-validate"
-version = "0.2.2"
+version = "0.3.0"
 description = "Nornir plugin to validate network state on a per-device basis"
 readme = "README.md"
 license = "MIT"
@@ -109,7 +109,7 @@ ignore = [
 convention = "google"
 
 [tool.uv.sources]
-nornir-rich = { git = "https://github.com/sjhloco/nornir_rich", rev = "format_string_result" }
+nornir-rich = { git = "https://github.com/sjhloco/nornir_rich", rev = "per_panel_var" }
 ntc-templates = { git = "https://github.com/networktocode/ntc-templates.git", rev = "286039e" }
 
 [tool.pytest.ini_options]
