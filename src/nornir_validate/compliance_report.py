@@ -73,9 +73,8 @@ def _save_report_to_file(
     existing_report.update(report)
     with open(filename, "w") as file_content:
         json.dump(existing_report, file_content)
-    # return f" The report can be viewed using:  \n \33[3m\033[1;37m\33[30m  cat {filename} | python -m json.tool \033[0;0m"
     return (
-        f" The full report can be viewed using 'cat {filename} | python -m json.tool'"
+        f"The full report can be viewed using: cat '{filename}' | python -m json.tool"
     )
 
 

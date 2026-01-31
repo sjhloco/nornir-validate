@@ -494,7 +494,16 @@ def print_result_val(result: AggregatedResult) -> None:
     Args:
         result (AggregatedResult): The nornir result from the execution of the task, so the compliance report in Nornir Result format
     """
-    print_result(result, vars=["report_complies", "report_file", "result"])
+    try:
+        print_result(
+            result,
+            vars=["report_complies", "report_file", "result"],
+            line_breaks=True,
+            empty_var=False,
+            per_panel_var=True,
+        )
+    except AttributeError:
+        print_result(result)
 
 
 def print_result_gvf(result: AggregatedResult, nr: Nornir) -> None:
@@ -531,11 +540,17 @@ def print_result_gvf(result: AggregatedResult, nr: Nornir) -> None:
         combined_result[each_host] = MultiResult(name=result.name)
         combined_result[each_host].append(modified_result)
     # Prints only selected fields from nornir result
-    print_result(
-        combined_result,
-        vars=[
-            "used_subfeat",
-            "not_used_subfeat",
-            "file_info",
-        ],
-    )
+    try:
+        print_result(
+            combined_result,
+            vars=[
+                "used_subfeat",
+                "not_used_subfeat",
+                "file_info",
+            ],
+            line_breaks=True,
+            empty_var=False,
+            per_panel_var=True,
+        )
+    except AttributeError:
+        print_result(combined_result)
