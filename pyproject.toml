@@ -109,8 +109,8 @@ ignore = [
 convention = "google"
 
 [tool.uv.sources]
-nornir-rich = { git = "https://github.com/sjhloco/nornir_rich", rev = "per_panel_var" }
 ntc-templates = { git = "https://github.com/networktocode/ntc-templates.git", rev = "286039e" }
+nornir-rich = { git = "https://github.com/sjhloco/nornir_rich", branch = "per_panel_var" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

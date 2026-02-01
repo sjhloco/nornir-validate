@@ -499,7 +499,6 @@ def print_result_val(result: AggregatedResult) -> None:
             result,
             vars=["report_complies", "report_file", "result"],
             line_breaks=True,
-            empty_var=False,
             per_panel_var=True,
         )
     except AttributeError:
@@ -549,7 +548,6 @@ def print_result_gvf(result: AggregatedResult, nr: Nornir) -> None:
                 "file_info",
             ],
             line_breaks=True,
-            empty_var=False,
             per_panel_var=True,
         )
     except AttributeError:

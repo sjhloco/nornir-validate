@@ -771,7 +771,7 @@ wheels = [
 [[package]]
 name = "nornir-rich"
 version = "0.2.0"
-source = { git = "https://github.com/sjhloco/nornir_rich?rev=per_panel_var#c6131cb36adbd98244d59380cb4b7de6adc0836c" }
+source = { git = "https://github.com/sjhloco/nornir_rich?branch=per_panel_var#d42f1ac1ed4a2e20a948c512aaa5659840e6ae8d" }
 dependencies = [
     { name = "nornir" },
     { name = "rich" },
@@ -836,7 +836,7 @@ requires-dist = [
     { name = "napalm", specifier = ">=5.1.0" },
     { name = "nornir-jinja2", specifier = ">=0.2.0" },
     { name = "nornir-netmiko", specifier = ">=1.0.1" },
-    { name = "nornir-rich", git = "https://github.com/sjhloco/nornir_rich?rev=per_panel_var" },
+    { name = "nornir-rich", git = "https://github.com/sjhloco/nornir_rich?branch=per_panel_var" },
     { name = "nornir-utils", specifier = ">=0.2.0" },
     { name = "ntc-templates", git = "https://github.com/networktocode/ntc-templates.git?rev=286039e" },
     { name = "pyaml", specifier = ">=25.7.0" },
