@@ -1,5 +1,5 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/nornir-validate)
-![PyPI - Version](https://img.shields.io/pypi/v/nornir-validate)
+[![PyPI - Version](https://img.shields.io/pypi/v/nornir-validate)](https://pypi.org/project/nornir-validate)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
 [![Documentation Status](https://readthedocs.org/projects/nornir-validate/badge/?version=latest)](https://nornir-validate.readthedocs.io/en/latest/?badge=latest)
