@@ -225,10 +225,14 @@ def format_swport(val_file: bool, output: list[dict[str, Any]]) -> dict[str, Any
             result[each_intf["interface"]]["vlan"] = _make_int(each_intf["access_vlan"])
         elif bool(re.search("trunk", each_intf["mode"])):
             trunk_vl = each_intf["trunking_vlans"]
-            try:
+            # If is a string (NXOS) split into list of VLANs based on ","
+            if isinstance(trunk_vl, str):
                 trunk_vl = [_make_int(vl) for vl in trunk_vl.split(",")]
-            except AttributeError:
-                trunk_vl = [_make_int(vl) for vl in trunk_vl[0].split(",")]
+            # If is already a list of VLANs (IOS), if possible make them integers
+            elif isinstance(trunk_vl, list):
+                trunk_vl = [_make_int(vl) for vl in trunk_vl]
+            else:
+                trunk_vl = None
             result[each_intf["interface"]]["vlan"] = trunk_vl
         else:
             result[each_intf["interface"]]["vlan"] = None
