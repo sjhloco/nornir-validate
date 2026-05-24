@@ -65,7 +65,7 @@
                 "access_vlan": "1",
                 "native_vlan": "1",
                 "voice_vlan": "none",
-                "trunking_vlans": ["144,3101,3102"]
+                "trunking_vlans": ["144","3101","3102"]
             },
             {
                 "interface": "Gi0/2",
