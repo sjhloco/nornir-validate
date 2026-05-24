@@ -838,7 +838,7 @@ requires-dist = [
     { name = "nornir-netmiko", specifier = ">=1.0.1" },
     { name = "nornir-rich", git = "https://github.com/sjhloco/nornir_rich?branch=per_panel_var" },
     { name = "nornir-utils", specifier = ">=0.2.0" },
-    { name = "ntc-templates", git = "https://github.com/networktocode/ntc-templates.git?rev=286039e" },
+    { name = "ntc-templates", specifier = ">=9.1.0" },
     { name = "pyaml", specifier = ">=25.7.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.14.4" },
@@ -862,10 +862,14 @@ docs = [
 
 [[package]]
 name = "ntc-templates"
-version = "8.1.0"
-source = { git = "https://github.com/networktocode/ntc-templates.git?rev=286039e#286039ef3a4c9b5899ef35eb7e662f44c7328576" }
+version = "9.1.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "textfsm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/13/4a/dede7aa900a47acd8e6a10785b3b1bed69d7dc68f367230b8a77b8ad05fa/ntc_templates-9.1.0.tar.gz", hash = "sha256:2187df39edcd03ee953433c3cec37e2834acbb67dbc03971f06a5842d6e13c71", size = 322614, upload-time = "2026-04-01T14:12:07.468Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/5a/2e863b5479ce69d2bd0c0183f3758434635dac2157268e959117b915c2f1/ntc_templates-9.1.0-py3-none-any.whl", hash = "sha256:d6a25ff09c603ba84deea3a31589287a47320f12e8c2a3613e953951079ae715", size = 642361, upload-time = "2026-04-01T14:12:06.07Z" },
 ]
 
 [[package]]
