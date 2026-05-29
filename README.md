@@ -31,12 +31,6 @@ or
 uv add nornir-validate
 ```
 
-Due to the fact I am using a customised version on *nornir-rich* you must install that branch manually as PyPi will only default PyPI version (see [issue #5](https://github.com/sjhloco/nornir-validate/issues/5))
-
-```bash
-uv add "nornir_rich @ git+https://github.com/sjhloco/nornir_rich" --branch per_panel_var
-```
-
 ## Usage
 
 Below is just the bare minimum to get started, see the [documentation](https://nornir-validate.readthedocs.io/en/latest/index.html#) for more detailed information.
