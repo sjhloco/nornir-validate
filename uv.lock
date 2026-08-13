@@ -769,16 +769,16 @@ wheels = [
 ]
 
 [[package]]
-name = "nornir-rich-panelvar"
-version = "0.2.0.post1"
+name = "nornir-rich"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nornir" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9a/45/4839f5578763f47e50390a04664d5dabc0cdb670c18ff94a089e71ee08e3/nornir_rich_panelvar-0.2.0.post1.tar.gz", hash = "sha256:cacb5165ad77be49deec5c86e489ce95f82c66ec846df28ad3a5edae6187f1eb", size = 6244, upload-time = "2026-05-29T22:04:29.112Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/86/7868b9a39ff14862339f0af1b0deb8ea0dd9375bfe762b2f212341fc9003/nornir_rich-0.3.0.tar.gz", hash = "sha256:2ca9401a8b744d4b2613e292bb3e3b44cc43d801bc001845b4beac763baa88f0", size = 8465, upload-time = "2026-07-19T19:55:43.664Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/7d/3f2b53b08757ba38b9f2de2161ecfc58898a646b41f1cf61e3fd4ef05d4a/nornir_rich_panelvar-0.2.0.post1-py3-none-any.whl", hash = "sha256:d07e198314d2d700b21689ec837142d61eb0fcd0100d0ee5a4f1a9bd8c2bfd11", size = 7301, upload-time = "2026-05-29T22:04:27.845Z" },
+    { url = "https://files.pythonhosted.org/packages/da/01/df76d3f85d3db6c5d88e46b7b7d9a3425f36f108a1598a699e6dce25d74d/nornir_rich-0.3.0-py3-none-any.whl", hash = "sha256:d851efe31567630e53810dd60e3e9f614256f30cde97a59d0116d320dafcc4ea", size = 6591, upload-time = "2026-07-19T19:55:42.853Z" },
 ]
 
 [[package]]
@@ -802,7 +802,7 @@ dependencies = [
     { name = "napalm" },
     { name = "nornir-jinja2" },
     { name = "nornir-netmiko" },
-    { name = "nornir-rich-panelvar" },
+    { name = "nornir-rich" },
     { name = "nornir-utils" },
     { name = "ntc-templates" },
     { name = "pyaml" },
@@ -840,7 +840,7 @@ requires-dist = [
     { name = "napalm", specifier = ">=5.1.0" },
     { name = "nornir-jinja2", specifier = ">=0.2.0" },
     { name = "nornir-netmiko", specifier = ">=1.0.1" },
-    { name = "nornir-rich-panelvar", specifier = ">=0.2.0.post1" },
+    { name = "nornir-rich", specifier = ">=0.3.0" },
     { name = "nornir-utils", specifier = ">=0.2.0" },
     { name = "ntc-templates", specifier = ">=9.1.0" },
     { name = "pyaml", specifier = ">=25.7.0" },
