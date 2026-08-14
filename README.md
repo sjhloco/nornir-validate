@@ -82,6 +82,13 @@ Below are few projects that use *nornir-validate*:
 - [nornir-ppcheck](https://github.com/sjhloco/nornir-ppcheck): Tool for running pre and post change check as well as validation of network state
 - [update-mgmt-acl](https://github.com/sjhloco/update-mgmt-acl): Tool to update management and SNMP ACLs on Cisco IOS-XE, NXOS and ASA
 
+## Development
+
+```bash
+uv sync --dev
+uv run pytest
+```
+
 ## Contributing
 
 If you want to help add any validations to the project the [Contribution Guidelines](https://nornir-validate.readthedocs.io/en/latest/contribute/index.html) walk through the steps.
