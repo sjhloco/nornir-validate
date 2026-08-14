@@ -95,4 +95,4 @@ If you want to help add any validations to the project the [Contribution Guideli
 
 ## AI Disclaimer
 
-Everything before 2026-08-13 was written without AI assistance. From that date, some changes are made with AI assistance (mainly Claude Code).
+Everything up to 2026-08-13 was written without AI assistance. Since then, some changes are made with AI assistance (mainly Claude Code).
