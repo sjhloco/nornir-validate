@@ -36,6 +36,12 @@ Create the Python virtual environment and run all the workflow actions to prove 
 
     This documentation assumes you are using `uv <https://docs.astral.sh/uv/>`_ for python and package management, if you are using pip use ``pip install -r requirements.txt`` and remove ``uv run`` from the commands. 
 
+To check test coverage (a one-off diagnostic, not a project dependency) use the ``--with`` flag to run *pytest-cov* from an ephemeral overlay.
+
+.. code-block:: bash
+
+    uv run --with pytest-cov pytest --cov=src/nornir_validate --cov-report=term-missing
+
 3. Branch and make changes
 --------------------------
 

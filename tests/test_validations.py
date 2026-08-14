@@ -23,6 +23,7 @@ from nornir.core.task import Result, Task
 from nornir_validate.compliance_report import generate_validate_report
 from nornir_validate.core import (
     actual_state_engine,
+    import_actual_state_modules,
     merge_os_types,
     remove_cmds_desired_state,
     task_desired_state,
@@ -35,8 +36,6 @@ from nornir_validate.core import (
 TEST_INVENTORY = os.path.join(os.path.dirname(__file__), "test_inventory")
 # WHERE TEST FILES ARE
 OS_TEST_FILES = os.path.join(os.path.dirname(__file__), "os_test_files")
-# ACTUAL VALIDATE TEMPLATES
-TEMPLATE_DIR = os.path.join(os.getcwd(), "feature_templates/")
 nr: Any = (
     None  # To fix MyPY as nr defined in fixture load_inv (session) which MyPY wont see
 )
@@ -449,3 +448,102 @@ class TestComplianceReport:
             # Validate all the sub-features match
             err_msg = f"❌ Compliance Report: {feature['vendor_os']} {feature['feat_name']} desired and actual state do not match"
             assert ex_report_val == tr_report_val, err_msg
+
+
+# ----------------------------------------------------------------------------
+# 6. GUARD: Pins the auto-discovery invariant the rest of this file's tests rely on
+# ----------------------------------------------------------------------------
+class TestIndexIntegrity:
+    def test_index_and_test_file_consistency(self) -> None:
+        """Guards against silently losing coverage as tests are found by scanning directories/index files.
+
+        A sub-feature added to an index without matching test fixtures (or vice versa) wouldn't fail any
+        other test, it just wouldn't be tested. Asserts:
+          - every all_index.yml feature has a feature_templates/<feature> dir
+          - every all_index.yml sub-feature appears in at least one OS index file
+          - every per-OS index feature has a tests/os_test_files/<os>/<feature> dir, and vice versa
+        """
+        index_dir = Path(str(files("nornir_validate").joinpath("index_files")))
+        template_dir = Path(str(files("nornir_validate").joinpath("feature_templates")))
+        os_index_files = [f for f in index_dir.iterdir() if f.name != "all_index.yml"]
+        all_index = load_yaml_file(index_dir / "all_index.yml")["all"]
+
+        def subfeat_names(subfeats: list[Any]) -> set[str]:
+            return {s if isinstance(s, str) else next(iter(s)) for s in subfeats}
+
+        # Every all_index.yml feature has a feature_templates/<feature> dir
+        template_features = {p.name for p in template_dir.iterdir() if p.is_dir()}
+        err_msg = "❌ Guard: all_index.yml features without a matching feature_templates dir (or vice versa)"
+        assert set(all_index) == template_features, err_msg
+
+        # Every all_index.yml sub-feature appears in at least one OS index file
+        all_subfeats = {
+            (feat, name)
+            for feat, subs in all_index.items()
+            for name in subfeat_names(subs)
+        }
+        os_subfeats: set[tuple[str, str]] = set()
+        for os_index_file in os_index_files:
+            os_index = load_yaml_file(os_index_file)["all"]
+            os_subfeats.update(
+                (feat, name)
+                for feat, subs in os_index.items()
+                for name in subfeat_names(subs)
+            )
+        err_msg = (
+            "❌ Guard: all_index.yml sub-features missing from every OS index file"
+        )
+        assert all_subfeats == os_subfeats, err_msg
+
+        # Every per-OS index feature has a tests/os_test_files/<os>/<feature> dir, and vice versa
+        index_os_feats = {
+            (f.name.removesuffix("_index.yml"), feat)
+            for f in os_index_files
+            for feat in load_yaml_file(f)["all"]
+        }
+        test_file_os_feats = {
+            (each_os.name, each_feat.name)
+            for each_os in os.scandir(OS_TEST_FILES)
+            if each_os.is_dir()
+            for each_feat in os.scandir(each_os.path)
+            if each_feat.is_dir()
+        }
+        err_msg = "❌ Guard: os index features without a matching tests/os_test_files dir (or vice versa)"
+        assert index_os_feats == test_file_os_feats, err_msg
+
+
+# ----------------------------------------------------------------------------
+# 7. DEFENSIVE: Asserts the defensive raises common to every feature_templates module
+# ----------------------------------------------------------------------------
+def get_feature_names() -> list[str]:
+    """Dynamically discovers all feature_templates module names."""
+    template_dir = Path(str(files("nornir_validate").joinpath("feature_templates")))
+    return sorted(p.name for p in template_dir.iterdir() if p.is_dir())
+
+
+# os_type substring needed to reach a valid _set_keys branch (every module supports "ios" except fw)
+_VALID_OS_TYPE = {"fw": "asa"}
+
+
+class TestDefensiveRaises:
+    @pytest.mark.parametrize("feature", get_feature_names())
+    def test_format_actual_state_unknown_subfeature(self, feature: str) -> None:
+        """format_actual_state raises ValueError for a sub-feature it doesn't recognise."""
+        module = import_actual_state_modules(feature)[feature]
+        os_type = _VALID_OS_TYPE.get(feature, "ios")
+        with pytest.raises(ValueError, match="Unsupported sub_feature"):
+            module.format_actual_state(False, os_type, "bogus_sub_feature", [])
+
+    @pytest.mark.parametrize(
+        "feature",
+        [
+            f
+            for f in get_feature_names()
+            if hasattr(import_actual_state_modules(f)[f], "_set_keys")
+        ],
+    )
+    def test_set_keys_unknown_os_type(self, feature: str) -> None:
+        """_set_keys raises NotImplementedError for an os_type it doesn't recognise."""
+        module = import_actual_state_modules(feature)[feature]
+        with pytest.raises(NotImplementedError):
+            module._set_keys("bogus_os_type")
