@@ -41,7 +41,7 @@ def _save_report_to_file(
         directory (str): The directory where the report will be saved
         report (dict[str, Any]): The report dictionary that is returned by napalm_validate to be used by nornir Result
         complies (bool): True if the device complies with the validation rules, False otherwise
-        skipped (list[str]): A list of skipped tests
+        skipped (list[str]): Sub-features (feature.sub_feature) that were requested but never run
 
     Return: Report location and command to view prettified version (xxx | python -m json.tool)
     """
@@ -52,14 +52,11 @@ def _save_report_to_file(
         + datetime.now().strftime("%Y%m%d-%H%M")
         + ".json",
     )
-    # If report file already exists conditionally updates 'skipped' and 'complies' with report outcome
+    # If report file already exists accumulates 'skipped' and conditionally updates 'complies'
     if os.path.exists(filename):
         with open(filename) as file_content:
             existing_report = json.load(file_content)
-        if list(report.values())[0].get("skipped"):
-            existing_report["skipped"].extend(skipped)
-        elif len(skipped) == 0:
-            existing_report["skipped"] = skipped
+        existing_report.setdefault("skipped", []).extend(skipped)
         # Only adds if is no already failing compliance
         if existing_report.get("complies"):
             existing_report["complies"] = complies
@@ -67,8 +64,7 @@ def _save_report_to_file(
     else:
         existing_report = {}
         existing_report["complies"] = complies
-        if len(skipped) == 0:
-            existing_report["skipped"] = skipped
+        existing_report["skipped"] = skipped
     # Writes to file the full napalm_validate result (including an existing report)
     existing_report.update(report)
     with open(filename, "w") as file_content:
@@ -86,38 +82,37 @@ def generate_validate_report(
     a_state: dict[str, Any],
     hostname: str,
     directory: str | None,
+    skipped: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Runs the napalm-validate compare method on each feature, adds skipped key if cant be run producing compliance report output based on all features.
+    """Runs the napalm-validate compare method on each feature producing compliance report output based on all features.
 
     Args:
         d_state (dict[str, Any]): Desired state got from the user input
         a_state (dict[str, Any]): Actual state got from the device
         hostname (str): Hostname of the device being validated
         directory (str | None): If specified the directory where the report will be saved
+        skipped (list[str] | None): Sub-features (feature.sub_feature) that were requested but never run,
+            so had no command for this os_type. They can't be judged compliant, so they fail the report
 
     Returns (dict[str, Any]): A dictionary of report details result (compliance state) and tasks status, all all fed into Nornir Result
     """
     report: dict[str, Any] = {}
+    skipped = [] if skipped is None else skipped
     for feature, sub_feat in d_state.items():
         for each_sub_feat in sub_feat:
-            try:
-                name = f"{feature}.{each_sub_feat}"
-                # napalm_validate compare method produces report based on desired and actual state
-                d_state_sub_feat = d_state[feature][each_sub_feat]
-                a_state_sub_feat = a_state[feature][each_sub_feat]
-                if isinstance(d_state_sub_feat, dict):
-                    report[name] = validate.compare(d_state_sub_feat, a_state_sub_feat)
-                else:
-                    report[name] = validate.compare(
-                        {each_sub_feat: d_state_sub_feat},
-                        {each_sub_feat: a_state_sub_feat},
-                    )
-            # If validation couldn't be run on a command adds skipped key to the cmd dictionary
-            except NotImplementedError:
-                report[feature] = {"skipped": True, "reason": "NotImplemented"}
-    # RESULT: Results of compliance report (complies = validation result, skipped (list of skipped cmds) = validation didn't run)
+            name = f"{feature}.{each_sub_feat}"
+            # napalm_validate compare method produces report based on desired and actual state
+            d_state_sub_feat = d_state[feature][each_sub_feat]
+            a_state_sub_feat = a_state[feature][each_sub_feat]
+            if isinstance(d_state_sub_feat, dict):
+                report[name] = validate.compare(d_state_sub_feat, a_state_sub_feat)
+            else:
+                report[name] = validate.compare(
+                    {each_sub_feat: d_state_sub_feat},
+                    {each_sub_feat: a_state_sub_feat},
+                )
+    # RESULT: Results of compliance report (complies = validation result of everything that did run)
     complies = all([each_cmpl.get("complies", True) for each_cmpl in report.values()])
-    skipped = [feat for feat, output in report.items() if output.get("skipped", False)]
 
     # REPORT_FILE: Save report to file, if not add complies and skipped dictionary to report
     if hostname is not None and directory is not None:
@@ -131,13 +126,21 @@ def generate_validate_report(
     report["complies"] = complies
     if len(skipped) != 0:
         report["skipped"] = skipped
-    # RETURN_RESULT: If compliance fails set state failed (used by Nornir)
-    if complies:
-        my_report = dict(
-            failed=False, report=report, report_file=report_file, complies="✅ True"
-        )
-    if not complies or skipped:
+    # RETURN_RESULT: If compliance fails or anything was skipped set state failed (used by Nornir)
+    if not complies:
         my_report = dict(
             failed=True, report=report, report_file=report_file, complies="❌ False"
+        )
+    # Everything that ran complied, but a validation that never ran can't be called compliant
+    elif len(skipped) != 0:
+        my_report = dict(
+            failed=True,
+            report=report,
+            report_file=report_file,
+            complies=f"⚠️  True ({len(skipped)} skipped)",
+        )
+    else:
+        my_report = dict(
+            failed=False, report=report, report_file=report_file, complies="✅ True"
         )
     return my_report

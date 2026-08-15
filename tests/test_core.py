@@ -236,11 +236,25 @@ INPUT_DATA = {
         "layer2": {"vlan": {10: {"name": "test", "intf": []}}},
     }
 }
+# Same two sub-features against a WLC, which has a 'system.image' command but no 'layer2.vlan' one
+SHOW_SYSINFO_OUTPUT = [{"product_version": "8.10.171.0"}]
+WLC_INPUT_DATA = {
+    "all": {
+        "system": {"image": "8.10.171.0"},
+        "layer2": {"vlan": {10: {"name": "test", "intf": []}}},
+    }
+}
 
 
 @pytest.fixture
 def ios_nr(nr: Nornir) -> Nornir:
     return nr.filter(name="ios_host")
+
+
+@pytest.fixture
+def wlc_nr(nr: Nornir) -> Nornir:
+    """A WLC supports system.image but has no layer2 commands, used by the skipped tests."""
+    return nr.filter(name="wlc_host")
 
 
 class TestValidate:
@@ -339,6 +353,83 @@ class TestValidate:
         assert content["complies"] is True, err_msg
         assert content["system.image"]["complies"] is True, err_msg
         assert str(report_files[0]) in getattr(r, "report_file", ""), err_msg
+
+    def test_unsupported_feature_is_skipped(
+        self,
+        wlc_nr: Nornir,
+        monkeypatch: pytest.MonkeyPatch,
+        fake_netmiko: Callable[[dict[str, Any]], Callable[..., Result]],
+    ) -> None:
+        """A validation the template can't render for this os_type is reported as skipped, not silently dropped.
+
+        The WLC has a 'system.image' command but no 'layer2.vlan' one, so layer2.vlan never
+        makes it into the desired state. Without this it would vanish and the report would
+        still say it complies, having never checked it.
+        """
+        monkeypatch.setattr(
+            core,
+            "netmiko_send_command",
+            fake_netmiko({"show sysinfo": SHOW_SYSINFO_OUTPUT}),
+        )
+        result = wlc_nr.run(task=core.validate, input_data=WLC_INPUT_DATA)
+        r = result["wlc_host"][0]
+        err_msg = (
+            "❌ validate: An unrenderable sub-feature should be reported as skipped"
+        )
+        assert r.failed, err_msg
+        assert r.result["skipped"] == ["layer2.vlan"], err_msg
+        assert r.result["system.image"]["complies"] is True, err_msg
+        assert "skipped" in getattr(r, "report_complies", ""), err_msg
+
+    def test_empty_desired_state_is_not_skipped(
+        self,
+        ios_nr: Nornir,
+        monkeypatch: pytest.MonkeyPatch,
+        fake_netmiko: Callable[[dict[str, Any]], Callable[..., Result]],
+    ) -> None:
+        """generate_val_file writes '{}' for a sub-feature not in use, feeding that back mustn't fail.
+
+        An empty desired state holds nothing to assert, so it is not a validation that
+        couldn't be run (unlike a sub-feature with no command for this os_type) and must
+        not be reported as skipped, otherwise a generated validation file never complies.
+        """
+        monkeypatch.setattr(
+            core,
+            "netmiko_send_command",
+            fake_netmiko({"show version": SHOW_VERSION_OUTPUT}),
+        )
+        result = ios_nr.run(
+            task=core.validate,
+            input_data={
+                "all": {"system": {"image": "15.2(7)E2"}, "layer2": {"stp_vlan": {}}}
+            },
+        )
+        r = result["ios_host"][0]
+        err_msg = "❌ validate: An empty desired state shouldn't be reported as skipped"
+        assert not r.failed, err_msg
+        assert "True" in getattr(r, "report_complies", ""), err_msg
+
+    def test_skipped_report_is_saved_to_file(
+        self,
+        wlc_nr: Nornir,
+        monkeypatch: pytest.MonkeyPatch,
+        fake_netmiko: Callable[[dict[str, Any]], Callable[..., Result]],
+        tmp_path: Path,
+    ) -> None:
+        monkeypatch.setattr(
+            core,
+            "netmiko_send_command",
+            fake_netmiko({"show sysinfo": SHOW_SYSINFO_OUTPUT}),
+        )
+        wlc_nr.run(
+            task=core.validate, input_data=WLC_INPUT_DATA, save_report=str(tmp_path)
+        )
+        content = json.loads(next(tmp_path.glob("*.json")).read_text())
+        err_msg = (
+            "❌ validate: A skipped sub-feature should be written to the report file"
+        )
+        assert content["skipped"] == ["layer2.vlan"], err_msg
+        assert content["complies"] is True, err_msg
 
     def test_command_raises_aborts_host(
         self,
@@ -482,6 +573,34 @@ class TestGenerateValFile:
         # 'image' is enabled (has canned output), other ios sub-features have no canned command so error out
         assert "image" in getattr(r, "used_subfeat", []), err_msg
         assert len(getattr(r, "not_used_subfeat", [])) > 1, err_msg
+
+    def test_unsupported_os_features_do_not_fail(
+        self,
+        wlc_nr: Nornir,
+        monkeypatch: pytest.MonkeyPatch,
+        fake_netmiko: Callable[[dict[str, Any]], Callable[..., Result]],
+        tmp_path: Path,
+    ) -> None:
+        """Generate mode throws every feature at the device, sub-features it doesn't support drop out quietly.
+
+        Unlike validate, a feature with no command for this os_type must not be reported as
+        skipped or fail the task - that is the whole point of running against all_index.yml.
+        """
+        monkeypatch.setattr(
+            core,
+            "netmiko_send_command",
+            fake_netmiko({"show sysinfo": SHOW_SYSINFO_OUTPUT}),
+        )
+        result = wlc_nr.run(
+            task=core.generate_val_file, input_data="", directory=str(tmp_path)
+        )
+        r = result["wlc_host"][0]
+        err_msg = "❌ generate_val_file: Features unsupported by the os_type shouldn't fail the task"
+        assert not r.failed, err_msg
+        assert getattr(r, "used_subfeat", None) == ["image"], err_msg
+        # layer2 has no wlc commands at all, so it is absent from both lists rather than skipped
+        assert "vlan" not in getattr(r, "not_used_subfeat", []), err_msg
+        assert (tmp_path / "wlc_host_vals.yml").exists(), err_msg
 
 
 # ----------------------------------------------------------------------------

@@ -86,7 +86,7 @@ Once finished cleanup the html build as it is no longer needed, the external RTD
 
 .. code-block:: bash
 
-    uv run clean html 
+    uv run make clean
     
 6. Example validations
 ----------------------

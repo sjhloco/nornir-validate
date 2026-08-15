@@ -105,3 +105,30 @@ The compliance report compares desired and actual state via *napalm-validate* (a
    :align: center
 
    Example of a failed report due to global routing table missing 1 route (all other validations comply)
+
+Skipped validations
+~~~~~~~~~~~~~~~~~~~
+
+Not every feature is supported on every OS type, so a validation can be requested for a device that has no command to gather it. Rather than being dropped silently these are listed under a ``skipped`` key of *feature.sub_feature* names and the Nornir task is marked as failed.
+
+.. code-block:: python
+
+    {'system.image': {...}, 'skipped': ['layer2.vlan']}
+
+A skipped validation is not the same as a non-compliant one, the overall ``complies`` value still reflects only what actually ran. If this happens it normally means a feature is listed under the ``all`` dictionary but is only valid for some of the OS types being validated, move it to the relevant ``groups`` or ``hosts`` dictionary instead.
+
+.. figure:: /_static/images/compliant_with_skipped.png
+   :alt: Compliant report with skipped
+   :width: 100%
+   :align: center
+
+   Example of a compliant report but with skipped sub-features
+
+A sub-feature with an *empty* desired state (``{}``) is not skipped, it holds nothing to assert against so there is nothing that could be run. ``generate_val_file`` writes these for a sub-feature that isn't in use on the device, so a generated validation file still complies when fed straight back in. These are ignored entirely rather than skipped, so are absent from the compliance report and the ``skipped`` list. If a sub-feature you expected is missing from the report, check whether it has an empty desired state in the validation file.
+
+.. code-block:: yaml
+
+    intf_bonded:
+      port_channel: {}      # ignored, absent from the report
+
+This applies to validation only. ``generate_val_file`` deliberately tries every feature against a device to discover what is enabled, so therefore any feature without a command for that OS type is ignored rather than skipped.
