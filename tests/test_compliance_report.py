@@ -75,30 +75,41 @@ class TestGenerateValidateReport:
         report = cr.generate_validate_report(d_state, a_state, "host1", None)
         assert report["report"]["complies"] is complies, err_msg
 
-    def test_skipped_when_compare_not_implemented(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """NotImplementedError skip path.
-
-        Pins current behaviour: a sub-feature whose compare() raises NotImplementedError is
-        marked skipped and forces failed=True, even though 'complies' itself stays True.
-        """
-        err_msg = "❌ generate_validate_report: NotImplementedError should be reported as skipped"
-
-        def fake_compare(_src: object, _dst: object) -> None:
-            msg = "getter not implemented"
-            raise NotImplementedError(msg)
-
-        monkeypatch.setattr(cr.validate, "compare", fake_compare)
-        d_state = {"feat": {"sub": {"a": 1}}}
-        a_state = {"feat": {"sub": {"a": 1}}}
-        report = cr.generate_validate_report(d_state, a_state, "host1", None)
+    def test_skipped_fails_even_when_everything_run_complies(self) -> None:
+        """A validation that never ran is a failed run, even though what did run complied."""
+        err_msg = (
+            "❌ generate_validate_report: A skipped validation should fail the run"
+        )
+        d_state = {"system": {"image": "15.2(7)E2"}}
+        a_state = {"system": {"image": "15.2(7)E2"}}
+        report = cr.generate_validate_report(
+            d_state, a_state, "host1", None, ["layer2.vlan"]
+        )
         assert report["failed"] is True, err_msg
-        assert report["report"]["skipped"] == ["feat"], err_msg
-        assert report["report"]["feat"] == {
-            "skipped": True,
-            "reason": "NotImplemented",
-        }, err_msg
+        assert report["report"]["skipped"] == ["layer2.vlan"], err_msg
+        assert report["report"]["complies"] is True, err_msg
+        assert "skipped" in report["complies"], err_msg
+
+    def test_skipped_key_absent_when_nothing_skipped(self) -> None:
+        err_msg = "❌ generate_validate_report: 'skipped' shouldn't be added when nothing was skipped"
+        d_state = {"system": {"image": "15.2(7)E2"}}
+        a_state = {"system": {"image": "15.2(7)E2"}}
+        report = cr.generate_validate_report(d_state, a_state, "host1", None, [])
+        assert "skipped" not in report["report"], err_msg
+
+    def test_mismatch_wins_over_skipped(self) -> None:
+        """A real mismatch reports as non-compliant, not as the skipped variant."""
+        err_msg = (
+            "❌ generate_validate_report: A mismatch should take precedence over a skip"
+        )
+        d_state = {"system": {"image": "15.2(7)E2"}}
+        a_state = {"system": {"image": "15.2(7)E9"}}
+        report = cr.generate_validate_report(
+            d_state, a_state, "host1", None, ["layer2.vlan"]
+        )
+        assert report["failed"] is True, err_msg
+        assert report["complies"] == "❌ False", err_msg
+        assert report["report"]["skipped"] == ["layer2.vlan"], err_msg
 
 
 # ----------------------------------------------------------------------------
@@ -149,3 +160,38 @@ class TestSaveReportToFile:
         assert content["feat.sub"] == {"complies": True}, err_msg
         assert content["feat.sub2"] == {"complies": False}, err_msg
         assert content["complies"] is False, err_msg
+
+    def test_creates_new_file_with_skipped(self, tmp_path: Path) -> None:
+        """A non-empty skipped list must reach the file, not just the empty one."""
+        err_msg = "❌ _save_report_to_file: A skipped sub-feature should be written to a new report"
+        cr._save_report_to_file(
+            "host1",
+            str(tmp_path),
+            {"feat.sub": {"complies": True}},
+            True,
+            ["feat.sub2"],
+        )
+        content = json.loads(next(tmp_path.glob("*.json")).read_text())
+        assert content["skipped"] == ["feat.sub2"], err_msg
+
+    def test_merge_accumulates_skipped(self, tmp_path: Path) -> None:
+        """Merging into an existing report extends its skipped list rather than resetting it."""
+        err_msg = (
+            "❌ _save_report_to_file: Merging should accumulate skipped, not reset it"
+        )
+        cr._save_report_to_file(
+            "host1",
+            str(tmp_path),
+            {"feat.sub": {"complies": True}},
+            True,
+            ["feat.sub2"],
+        )
+        cr._save_report_to_file(
+            "host1",
+            str(tmp_path),
+            {"feat.sub3": {"complies": True}},
+            True,
+            ["feat.sub4"],
+        )
+        content = json.loads(next(tmp_path.glob("*.json")).read_text())
+        assert content["skipped"] == ["feat.sub2", "feat.sub4"], err_msg

@@ -55,6 +55,8 @@ print_result_val(result)
 
 By default the full compliance report will be printed to the screen if the validation fails, add the `save_report=""` argument to also save it to file.
 
+If a validation is requested for a device whose OS type has no command to gather it, it is reported under a `skipped` key and fails the task rather than being silently dropped from the report. This normally means a feature under the `all` dictionary is only valid for some of the OS types being validated, move it to the relevant `groups` or `hosts` dictionary.
+
 ### Auto-generation of Validation Files
 
 Rather than defining validation files manually from scratch they can be automatically generated from a devices actual state based of an **index of sub-features**. If no index file is specified (omit the `input_data=` argument), validations will be generated for **all enabled sub-features** on the device.

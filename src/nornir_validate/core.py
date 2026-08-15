@@ -195,6 +195,35 @@ def create_val_dm() -> dict[str, dict[str, list[str]]]:
 
 
 # ----------------------------------------------------------------------------
+#  REQUESTED: Records the sub-features asked for, to spot any that never get a command
+# ----------------------------------------------------------------------------
+def record_requested_validations(
+    requested: set[str], validations: dict[str, Any]
+) -> None:
+    """Adds the feature.sub_feature names from a scope of validations to the requested set.
+
+    Only validate (dict of sub-features) is tracked, generate_val_file passes a list of
+    sub-features as it deliberately throws all features at a device and expects the ones
+    with no command for that os_type to drop out quietly.
+
+    Sub-features with an empty desired state are ignored, generate_val_file writes these
+    for a sub-feature that isn't in use on the device. There is nothing to assert against
+    so they are not a validation that couldn't be run.
+
+    Args:
+        requested (set[str]): Set of feature.sub_feature names being built up, updated in place
+        validations (dict[str, Any]): The validations for one scope (hosts, groups or all)
+    """
+    for feature, sub_features in validations.items():
+        if isinstance(sub_features, dict):
+            requested.update(
+                f"{feature}.{sub_feat}"
+                for sub_feat, desired in sub_features.items()
+                if desired is not None and desired != {}
+            )
+
+
+# ----------------------------------------------------------------------------
 # 1. DESIRED_STATE: Create a host_var of desired state by running (per-os-type) task_template
 # ----------------------------------------------------------------------------
 def task_desired_state(
@@ -212,11 +241,13 @@ def task_desired_state(
         Optional[Result]: If no validation returns Nornir result stating so (if validations desired_sate added as hosts_vars to task host
     """
     desired_state: dict[str, Any] = {}
+    requested: set[str] = set()
     # 1a. TMPL: Create the desired_state for each feature to be validated (double logic to stop error if top level dict not exist)
     if (
         validations.get("hosts") is not None
         and validations["hosts"].get(str(task.host)) is not None
     ):
+        record_requested_validations(requested, validations["hosts"][str(task.host)])
         task.run(
             task=task_template,
             tmpl_path="feature_templates/",
@@ -227,6 +258,9 @@ def task_desired_state(
         validations.get("groups") is not None
         and validations["groups"].get(str(task.host.groups[0])) is not None
     ):
+        record_requested_validations(
+            requested, validations["groups"][str(task.host.groups[0])]
+        )
         task.run(
             task=task_template,
             tmpl_path="feature_templates/",
@@ -234,19 +268,21 @@ def task_desired_state(
             desired_state=desired_state,
         )
     if validations.get("all") is not None:
+        record_requested_validations(requested, validations["all"])
         task.run(
             task=task_template,
             tmpl_path="feature_templates/",
             validations=validations["all"],
             desired_state=desired_state,
         )
-    # 1b. VAR: Create host_var of combined desired states or exits if nothing to be validated
+    # 1b. VAR: Create host_vars of combined desired states and what was asked for, or exits if nothing to be validated
 
     if len(desired_state) == 0:
         result_text = "\u26a0\ufe0f  No validations were performed as no desired_state was generated, check input file and template"
         return Result(host=task.host, failed=True, result=result_text)
     else:
         task.host["desired_state"] = strip_empty_feat(desired_state)
+        task.host["requested_validations"] = requested
         return None
 
 
@@ -376,13 +412,20 @@ def validate(
     actual_state = actual_state_engine(False, os_type, feat_actual_data)
     # 4d. VAL: Uses Napalm_validate validate method to generate a compliance report
     desired_state = remove_cmds_desired_state(task.host["desired_state"])
+    # Any requested sub-feature with no command for this os_type never ran, so is reported as skipped
+    ran = {
+        f"{feat}.{sub_feat}"
+        for feat, sub_feats in task.host["desired_state"].items()
+        for sub_feat in sub_feats
+    }
+    skipped = sorted(task.host["requested_validations"] - ran)
     comp_result = generate_validate_report(
-        desired_state, actual_state, str(task.host), save_report
+        desired_state, actual_state, str(task.host), save_report, skipped
     )
 
     # 4e. RSLT: Nornir returns compliance result or if fails the compliance report
     # If report complies dont print full report (unless print_report set)
-    if "True" in comp_result["complies"] and not print_report:
+    if not comp_result["failed"] and not print_report:
         comp_result["report"] = ""
     # If report is printed remove complies (has its own section)
     elif comp_result["report"].get("complies") is not None:
