@@ -21,20 +21,23 @@
 {% set input_vars = None if generate_val_file else sub_feat[1] %}
 {% set sub_feat = sub_feat if generate_val_file else sub_feat[0] %}
 
-{# ### CONTROL_CONN {cmd: {nhbr: {site_id:x, color:x, state:x}}} ### #}
+{# ### CONTROL_CONN {cmd: {site_id: {nhbr: {colors: {color: state}}}}} ### #}
 {% if sub_feat == 'control_conn' and control_conn_cmd is defined %}
     control_conn:
       {{ control_conn_cmd }}:
 {% if generate_val_file %}
         VALIDATE
 {% elif desired_state %}
-        _mode: strict
-{% for each_nhbr, nhbr_info in input_vars.items() %}
-        {{ each_nhbr }}:
-          site_id: {{ nhbr_info.site_id }}
-          color: {{ nhbr_info.color }}
-          state: up
-{% endfor %}{% endif %}
+{% for each_site, site_info in input_vars.items() %}
+        {{ each_site }}:
+          _mode: strict
+{% for each_nhbr, nhbr_info in site_info.items() %}
+          {{ each_nhbr }}:
+            colors:
+              _mode: strict
+{% for each_color in nhbr_info.colors %}
+              {{ each_color }}: up
+{% endfor %}{% endfor %}{% endfor %}{% endif %}
 {# ### OMP_PEER: {cmd: {peer: {site_id:x, routes_received:x, routes_installed:x:, routes_sent:x, state:up}}} ### #}
 {% elif sub_feat == 'omp_peer' and omp_peer_cmd is defined %}
     omp_peer:

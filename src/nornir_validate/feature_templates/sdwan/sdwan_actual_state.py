@@ -78,7 +78,7 @@ def _make_int(input_data: str) -> int | str:
 
 def format_control_conn(
     val_file: bool, key: OsKeys, output: list[dict[str, str]]
-) -> dict[str, Any]:
+) -> dict[str | int, Any]:
     """Format control connections into the data structure.
 
     Args:
@@ -86,16 +86,24 @@ def format_control_conn(
         key (OsKeys): Keys for the specific OS type to retrieve the output data
         output (list[dict[str, str]]): The command output from the device in ntc data structure OR raw data structure
     Returns:
-        dict[str, dict[str, str | int]]: {nhbr: {site_id:x, color:x, state:x}} val file has no {state: x}
+        dict[str | int, Any]: {site_id: {nhbr: {colors: {color: state}}}} val file colors is a list of [color]
     """
-    result: dict[str, dict[str, str | int]] = defaultdict(dict)
+    result: dict[str | int, dict[str, Any]] = defaultdict(dict)
     for entry in output:
+        site_id = _make_int(entry["site_id"])
         nhbr = entry[key.cntl_nhbr]
-        result[nhbr]["site_id"] = _make_int(entry["site_id"])
-        result[nhbr]["color"] = entry[key.cntl_color]
-        # If is actual_state adds neighbor state
-        if not val_file:
-            result[nhbr]["state"] = entry["state"]
+        color = entry[key.cntl_color]
+        nhbr_data = result[site_id].setdefault(nhbr, {})
+        # Val file is a list of colors, actual state a dict of the color and its state
+        if val_file:
+            colors = nhbr_data.setdefault("colors", [])
+            if color not in colors:
+                colors.append(color)
+        else:
+            colors = nhbr_data.setdefault("colors", {})
+            # Collapsed vbond connections must not let an up state hide an already bad one
+            if colors.get(color, "up") == "up":
+                colors[color] = entry["state"]
     return dict(result)
 
 
@@ -172,7 +180,7 @@ def format_actual_state(
     key = _set_keys(os_type)
     raw_output, ntc_output = _format_output(os_type, sub_feature, output)
 
-    ### CONTROL_CONN: {nhbr: {site_id:x, color:x, state:x}}
+    ### CONTROL_CONN: {site_id: {nhbr: {colors: {color: state}}}}
     if sub_feature == "control_conn":
         return format_control_conn(val_file, key, ntc_output)
     ### OMP_PEER: {peer: {site_id:x, routes_received:x, routes_installed:x:, routes_sent:x, state:x}}
