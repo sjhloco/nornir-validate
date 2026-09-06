@@ -51,21 +51,23 @@
           routes_sent: {{ peer_info.routes_sent }}
           state: up
 {% endfor %}{% endif %}
-{# ### BFD_SESSIONS: {cmd: {nhbr: {site_id:x, local_color:x, remote_color:x, state:x}}} ### #}
+{# ### BFD_SESSIONS: {cmd: {site_id: {nhbr: {color_pairs: {local->remote: state}}}}} ### #}
 {% elif sub_feat == 'bfd_session' and bfd_session_cmd is defined %}
     bfd_session:
       {{ bfd_session_cmd }}:
 {% if generate_val_file %}
         VALIDATE
 {% elif desired_state %}
-        _mode: strict
-{% for each_nhbr, nhbr_info in input_vars.items() %}
-        {{ each_nhbr }}:
-          site_id: {{ nhbr_info.site_id }}
-          local_color: {{ nhbr_info.local_color }}
-          remote_color: {{ nhbr_info.remote_color }}
-          state: up
-{% endfor %}{% endif %}
+{% for each_site, site_info in input_vars.items() %}
+        {{ each_site }}:
+          _mode: strict
+{% for each_nhbr, nhbr_info in site_info.items() %}
+          {{ each_nhbr }}:
+            color_pairs:
+              _mode: strict
+{% for each_pair in nhbr_info.color_pairs %}
+              {{ each_pair }}: up
+{% endfor %}{% endfor %}{% endfor %}{% endif %}
 
 {# ##### End statements: for sub_feature and sub_feature conditional  ##### #}
 {% endif %}{% endfor %}
