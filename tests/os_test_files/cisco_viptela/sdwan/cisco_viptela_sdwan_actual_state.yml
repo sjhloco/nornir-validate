@@ -1,53 +1,53 @@
 sdwan:
   control_conn:
-    172.37.205.6:
-      site_id: 65123
-      color: silver
-      state: up
-    10.7.205.1:
-      site_id: 65221
-      color: gold
-      state: up
-    10.8.205.6:
-      site_id: 65222
-      color: silver
-      state: up
-    10.94.3.250:
-      site_id: 222
-      color: default
-      state: up
-    10.94.3.249:
-      site_id: 0
-      color: default
-      state: up
-    10.94.2.249:
-      site_id: 0
-      color: default
-      state: up
-    10.94.2.248:
-      site_id: 120
-      color: default
-      state: up
-    10.94.2.247:
-      site_id: 125
-      color: gold
-      state: up
-    10.8.205.1:
-      site_id: 65222
-      color: gold
-      state: up
-    172.37.205.1:
-      site_id: 65123
-      color: gold
-      state: up
-    172.31.127.1:
-      site_id: 65124
-      color: gold
-      state: up
-    172.31.127.6:
-      site_id: 65124
-      color: gold
-      state: up
+    65123:
+      172.37.205.6:
+        colors:
+          gold: up
+          silver: up
+      172.37.205.1:
+        colors:
+          silver: up
+          gold: up
+    65221:
+      10.7.205.1:
+        colors:
+          gold: up
+    65222:
+      10.8.205.6:
+        colors:
+          silver: up
+      10.8.205.1:
+        colors:
+          gold: up
+    222:
+      10.94.3.250:
+        colors:
+          default: up
+    0:
+      10.94.3.249:
+        colors:
+          default: up
+      10.94.2.249:
+        colors:
+          default: up
+    120:
+      10.94.2.248:
+        colors:
+          default: up
+    125:
+      10.94.2.247:
+        colors:
+          gold: up
+    65124:
+      172.31.127.1:
+        colors:
+          silver: up
+          gold: up
+      172.31.127.6:
+        colors:
+          silver: up
+          gold: up
   omp_peer:
     10.7.55.1:
       site_id: 65251

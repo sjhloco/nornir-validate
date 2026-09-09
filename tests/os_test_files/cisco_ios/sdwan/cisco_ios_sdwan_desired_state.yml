@@ -1,23 +1,30 @@
 sdwan:
   control_conn:
     show sdwan control connections:
-      _mode: strict
-      10.14.2.250:
-        site_id: 102
-        color: gold
-        state: up
-      10.14.3.250:
-        site_id: 202
-        color: gold
-        state: up
-      0.0.0.0:
-        site_id: 0
-        color: gold
-        state: up
-      10.14.2.248:
-        site_id: 100
-        color: gold
-        state: up
+      102:
+        _mode: strict
+        10.14.2.250:
+          colors:
+            _mode: strict
+            gold: up
+      202:
+        _mode: strict
+        10.14.3.250:
+          colors:
+            _mode: strict
+            gold: up
+      0:
+        _mode: strict
+        0.0.0.0:
+          colors:
+            _mode: strict
+            gold: up
+      100:
+        _mode: strict
+        10.14.2.248:
+          colors:
+            _mode: strict
+            gold: up
   omp_peer:
     show sdwan omp peers:
       _mode: strict

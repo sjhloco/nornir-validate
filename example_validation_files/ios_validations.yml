@@ -309,20 +309,24 @@ all:
   # SDWAN: Validations
   # ----------------------------------------------------------------------------
   sdwan:
-    ## Control Connections (strict): Strict dictionary of control connections, the associated site-ID and local color
+    ## Control Connections: Per-site dictionary of controller system-IPs and a strict list of the local colors used to reach them (all implicitly up)
     control_conn:
-      10.14.2.250:
-        site_id: 102
-        color: gold
-      10.14.3.250:
-        site_id: 202
-        color: gold
-      0.0.0.0:
-        site_id: 0
-        color: gold
-      10.14.2.248:
-        site_id: 100
-        color: gold
+      102:
+        10.14.2.250:
+          colors:
+          - gold
+      202:
+        10.14.3.250:
+          colors:
+          - gold
+      0:
+        0.0.0.0:
+          colors:
+          - gold
+      100:
+        10.14.2.248:
+          colors:
+          - gold
     ## OMP Peers (strict): Strict dictionary of OMP peers, the associated site-ID and number of received, installed and sent prefixes
     omp_peer:
       10.94.2.240:
