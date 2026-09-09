@@ -25,31 +25,33 @@ all:
         routes_installed: 0
         routes_sent: 30
     bfd_session:
-      10.9.255.1:
-        site_id: 65222
-        local_color: private6
-        remote_color: private6
-      10.9.255.6:
-        site_id: 65222
-        local_color: private6
-        remote_color: private6
-      10.66.255.1:
-        site_id: 65211
-        local_color: gold
-        remote_color: gold
-      10.94.2.247:
-        site_id: 145
-        local_color: gold
-        remote_color: gold
-      10.94.3.247:
-        site_id: 305
-        local_color: gold
-        remote_color: gold
-      172.47.255.1:
-        site_id: 65003
-        local_color: gold
-        remote_color: gold
-      172.47.255.6:
-        site_id: 65003
-        local_color: gold
-        remote_color: silver
+      65222:
+        10.9.255.1:
+          color_pairs:
+          - gold->gold
+          - private6->private6
+        10.9.255.6:
+          color_pairs:
+          - gold->silver
+          - private6->private6
+      65211:
+        10.66.255.1:
+          color_pairs:
+          - gold->gold
+      145:
+        10.94.2.247:
+          color_pairs:
+          - gold->gold
+      305:
+        10.94.3.247:
+          color_pairs:
+          - gold->gold
+      65003:
+        172.47.255.1:
+          color_pairs:
+          - gold->silver
+          - gold->gold
+        172.47.255.6:
+          color_pairs:
+          - gold->gold
+          - gold->silver

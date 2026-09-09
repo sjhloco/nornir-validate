@@ -30,38 +30,33 @@ sdwan:
       routes_sent: 30
       state: up
   bfd_session:
-    10.9.255.1:
-      site_id: 65222
-      local_color: private6
-      remote_color: private6
-      state: up
-    10.9.255.6:
-      site_id: 65222
-      local_color: private6
-      remote_color: private6
-      state: up
-    10.66.255.1:
-      site_id: 65211
-      local_color: gold
-      remote_color: gold
-      state: up
-    10.94.2.247:
-      site_id: 145
-      local_color: gold
-      remote_color: gold
-      state: up
-    10.94.3.247:
-      site_id: 305
-      local_color: gold
-      remote_color: gold
-      state: up
-    172.47.255.1:
-      site_id: 65003
-      local_color: gold
-      remote_color: gold
-      state: up
-    172.47.255.6:
-      site_id: 65003
-      local_color: gold
-      remote_color: silver
-      state: up
+    65222:
+      10.9.255.1:
+        color_pairs:
+          gold->gold: up
+          private6->private6: up
+      10.9.255.6:
+        color_pairs:
+          gold->silver: up
+          private6->private6: up
+    65211:
+      10.66.255.1:
+        color_pairs:
+          gold->gold: up
+    145:
+      10.94.2.247:
+        color_pairs:
+          gold->gold: up
+    305:
+      10.94.3.247:
+        color_pairs:
+          gold->gold: up
+    65003:
+      172.47.255.1:
+        color_pairs:
+          gold->silver: up
+          gold->gold: up
+      172.47.255.6:
+        color_pairs:
+          gold->gold: up
+          gold->silver: up

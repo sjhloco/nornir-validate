@@ -35,39 +35,45 @@ sdwan:
         state: up
   bfd_session:
     show sdwan bfd sessions table:
-      _mode: strict
-      10.9.255.1:
-        site_id: 65222
-        local_color: private6
-        remote_color: private6
-        state: up
-      10.9.255.6:
-        site_id: 65222
-        local_color: private6
-        remote_color: private6
-        state: up
-      10.66.255.1:
-        site_id: 65211
-        local_color: gold
-        remote_color: gold
-        state: up
-      10.94.2.247:
-        site_id: 145
-        local_color: gold
-        remote_color: gold
-        state: up
-      10.94.3.247:
-        site_id: 305
-        local_color: gold
-        remote_color: gold
-        state: up
-      172.47.255.1:
-        site_id: 65003
-        local_color: gold
-        remote_color: gold
-        state: up
-      172.47.255.6:
-        site_id: 65003
-        local_color: gold
-        remote_color: silver
-        state: up
+      65222:
+        _mode: strict
+        10.9.255.1:
+          color_pairs:
+            _mode: strict
+            gold->gold: up
+            private6->private6: up
+        10.9.255.6:
+          color_pairs:
+            _mode: strict
+            gold->silver: up
+            private6->private6: up
+      65211:
+        _mode: strict
+        10.66.255.1:
+          color_pairs:
+            _mode: strict
+            gold->gold: up
+      145:
+        _mode: strict
+        10.94.2.247:
+          color_pairs:
+            _mode: strict
+            gold->gold: up
+      305:
+        _mode: strict
+        10.94.3.247:
+          color_pairs:
+            _mode: strict
+            gold->gold: up
+      65003:
+        _mode: strict
+        172.47.255.1:
+          color_pairs:
+            _mode: strict
+            gold->silver: up
+            gold->gold: up
+        172.47.255.6:
+          color_pairs:
+            _mode: strict
+            gold->gold: up
+            gold->silver: up

@@ -126,7 +126,7 @@ def format_omp(
 
 def format_bfd_session(
     val_file: bool, key: OsKeys, output: list[dict[str, str]]
-) -> dict[str, Any]:
+) -> dict[str | int, Any]:
     """Format BFD sessions into the data structure.
 
     Args:
@@ -134,17 +134,19 @@ def format_bfd_session(
         key (OsKeys): Keys for the specific OS type to retrieve the output data
         output (list[dict[str, str]]): The command output from the device in ntc data structure OR raw data structure
     Returns:
-        dict[str, dict[str, str | int]]: {nhbr: {site_id:x, local_color:x, remote_color:x, state:x}} val file has no {state: x}
+        dict[str | int, Any]: {site_id: {nhbr: {color_pairs: {local->remote: state}}}} val file color_pairs is a list of [local->remote]
     """
-    result: dict[str, dict[str, str | int]] = defaultdict(dict)
+    result: dict[str | int, dict[str, Any]] = defaultdict(dict)
     for entry in output:
+        site_id = _make_int(entry["site_id"])
         nhbr = entry[key.bfd_nhbr]
-        result[nhbr]["site_id"] = _make_int(entry["site_id"])
-        result[nhbr]["local_color"] = entry["local_color"]
-        result[nhbr]["remote_color"] = entry["remote_color"]
-        # If is actual_state adds neighbor state
-        if not val_file:
-            result[nhbr]["state"] = entry["state"]
+        color_pair = f"{entry['local_color']}->{entry['remote_color']}"
+        nhbr_data = result[site_id].setdefault(nhbr, {})
+        # Val file is a list of color pairs, actual state a dict of the color pair and its state
+        if val_file:
+            nhbr_data.setdefault("color_pairs", []).append(color_pair)
+        else:
+            nhbr_data.setdefault("color_pairs", {})[color_pair] = entry["state"]
     return dict(result)
 
 
@@ -156,7 +158,7 @@ def format_actual_state(
     os_type: str,
     sub_feature: str,
     output: list[str | dict[str, str]],
-) -> dict[str, Any]:
+) -> dict[Any, Any]:
     """Engine to run all the actual state and validation file sub-feature formatting.
 
     Args:
@@ -165,7 +167,7 @@ def format_actual_state(
         sub_feature (str): The name of the sub-feature that is being validated
         output (list[str | dict[str, str]]): The structured (dict from NTC template) or unstructured (str/int from raw) command output from the device
     Returns:
-        dict[str, Any]: Returns cmd output formatted into the data structure of actual state or validation file
+        dict[Any, Any]: Returns cmd output formatted into the data structure of actual state or validation file
     """
     key = _set_keys(os_type)
     raw_output, ntc_output = _format_output(os_type, sub_feature, output)
@@ -176,7 +178,7 @@ def format_actual_state(
     ### OMP_PEER: {peer: {site_id:x, routes_received:x, routes_installed:x:, routes_sent:x, state:x}}
     elif sub_feature == "omp_peer":
         return format_omp(val_file, key, ntc_output)
-    ### BFD_SESSION: {nhbr: {site_id:x, local_color:x, remote_color:x, state:x}}
+    ### BFD_SESSION: {site_id: {nhbr: {color_pairs: {local->remote: state}}}}
     elif sub_feature == "bfd_session":
         return format_bfd_session(val_file, key, ntc_output)
     ### CatchAll
